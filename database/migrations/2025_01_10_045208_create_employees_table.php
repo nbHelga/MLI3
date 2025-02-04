@@ -39,7 +39,6 @@ return new class extends Migration
             $table->string('pendidikan');
             $table->string('nama_sekolah');
             $table->string('email');
-            $table->string('email_company')->nullable();
             $table->string('no_hp');
             $table->string('no_hp_rekan_1');
             $table->string('no_hp_rekan_1_ket');
