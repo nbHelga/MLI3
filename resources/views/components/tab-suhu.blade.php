@@ -31,7 +31,7 @@ if ($activeParentTab !== 'all') {
     <!-- Parent Tabs -->
     <nav class="-mb-px flex space-x-8">
         @foreach($parentTabs as $value => $label)
-            <a href="{{ route('maintenance.suhu.list', ['tempat' => $value]) }}"
+            <a href="{{ route('suhu.list', ['tempat' => $value]) }}"
                class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm
                       {{ $activeParentTab === $value
                          ? 'border-indigo-500 text-indigo-600'
@@ -45,7 +45,7 @@ if ($activeParentTab !== 'all') {
     @if($activeParentTab !== 'all' && $activeParentTab !== 'masal')
         <nav class="mt-4 -mb-px flex space-x-8">
             @foreach($childTabs as $value => $label)
-                <a href="{{ route('maintenance.suhu.list', [
+                <a href="{{ route('suhu.list', [
                         'tempat' => $activeParentTab,
                         'ruangan' => $value
                     ]) }}"

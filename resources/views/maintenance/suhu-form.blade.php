@@ -1,5 +1,5 @@
 <div class="space-y-4">
-    <form method="POST" action="{{ route('maintenance.suhu.store') }}" enctype="multipart/form-data" id="suhuForm" onsubmit="return confirmSubmit(event)">
+    <form method="POST" action="{{ route('suhu.store') }}" enctype="multipart/form-data" id="suhuForm" onsubmit="return confirmSubmit(event)">
         @csrf
         <input type="hidden" name="tempat" value="{{ $tempat ?? '' }}">
         

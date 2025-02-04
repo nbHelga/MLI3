@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Asset;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class AssetAc extends Model
 {
@@ -12,7 +14,7 @@ class AssetAc extends Model
     protected $fillable=[
         'nama', //default AC
         'status', // aktif/nonaktif
-        'kode',
+        'id',
         'lokasi',
         'divisi',
         // 'pic', default yg edit 
@@ -20,5 +22,9 @@ class AssetAc extends Model
         'tipe',
         'kondisi',
     ];
+    public function asset(): BelongsTo
+    {
+        return $this->belongsTo(Asset::class);
+    }
 
 }

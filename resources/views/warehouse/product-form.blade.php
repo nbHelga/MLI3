@@ -57,7 +57,7 @@
             @enderror
         </div>
 
-        <!-- Jumlah -->
+        {{-- <!-- Jumlah -->
         <div>
             <label class="block text-sm font-medium text-gray-700">Jumlah</label>
             <x-input-nama 
@@ -69,10 +69,20 @@
             @error('jumlah')
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
             @enderror
-        </div>
+        </div> --}}
+
+        @php
+            $user = auth()->user();
+            $hasCS01Access = $user->menus()->where('submenu', 'CS01')->exists();
+            $hasCS02Access = $user->menus()->where('submenu', 'CS02')->exists();
+            
+            // Tentukan route berdasarkan akses
+            $redirectRoute = $hasCS01Access ? 'warehouse.product-list2' : 
+                            ($hasCS02Access ? 'warehouse.product-list' : 'warehouse.product-list2');
+        @endphp
 
         <div class="flex justify-end space-x-4">
-            <a href="{{ route('warehouse.product-list') }}"
+            <a href="{{ route($redirectRoute) }}"
                class="inline-flex justify-center rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50">
                 Cancel
             </a>
@@ -93,7 +103,7 @@
                     class="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
                 Back
             </button>
-            <button onclick="window.location.href='{{ route('warehouse.product-list') }}'"
+            <button onclick="window.location.href='{{ route($redirectRoute) }}'"
                     class="ml-3 inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
                 Continue
             </button>

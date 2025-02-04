@@ -1,6 +1,6 @@
 @props(['id', 'suhu'])
 
-<div x-data="{ showMenu: false, showWarning: false }">
+<div x-data="{ showMenu: false, showWarning: false }" class="relative inline-block text-left">
     <!-- Dropdown Trigger -->
     <button @click="showMenu = !showMenu" 
             type="button" 
@@ -13,10 +13,11 @@
     <!-- Dropdown Menu -->
     <div x-show="showMenu" 
          @click.away="showMenu = false"
-         class="absolute right-0 z-40 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+         class="absolute right-0 z-50 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5"
+         style="transform: translateY(-100%);">
         <div class="py-1">
             <!-- Edit -->
-            <a href="{{ route('maintenance.suhu.edit', $id) }}" 
+            <a href="{{ route('suhu.edit', $id) }}" 
                class="flex px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                 <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -38,10 +39,8 @@
 
     <!-- Warning Dialog -->
     <div x-show="showWarning" 
-         class="fixed inset-0 z-50 overflow-y-auto" 
-         aria-labelledby="modal-title" 
-         role="dialog" 
-         aria-modal="true">
+         class="fixed inset-0 z-[60] overflow-y-auto"
+         style="background: rgba(0,0,0,0.5);">
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <!-- Background overlay -->
             <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" 
@@ -72,7 +71,7 @@
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                     <button type="button"
                             @click="
-                                fetch('{{ route('maintenance.suhu.destroy', $id) }}', {
+                                fetch('{{ route('suhu.destroy', $id) }}', {
                                     method: 'DELETE',
                                     headers: {
                                         'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -84,7 +83,7 @@
                                 .then(data => {
                                     if (data.delete_success) {
                                         showWarning = false;
-                                        window.location.href = '{{ route('maintenance.suhu.list', ['delete_success' => true]) }}';
+                                        window.location.href = '{{ route('suhu.list', ['delete_success' => true]) }}';
                                     } else {
                                         alert('Gagal menghapus data');
                                     }

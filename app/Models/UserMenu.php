@@ -5,15 +5,26 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 class UserMenu extends Model
-{     protected $table = 'usermenu';
+{    
+    protected $table = 'usermenu';
 
     public $incrementing = false;
 
-    protected $primaryKey = ['id_employees', 'id_menu'];
+    protected $primaryKey = ['id_users', 'id_menu'];
 
     protected $fillable = [
-        'id_employees',
-        'id_menu',
+        'id_users',
+        'id_menu'
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'id_users', 'id');
+    }
+
+    public function menu()
+    {
+        return $this->belongsTo(Menu::class, 'id_menu', 'id');
+    }
     
 } 

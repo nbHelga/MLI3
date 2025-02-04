@@ -14,31 +14,17 @@ class UserMenuSeeder extends Seeder
      */
     public function run(): void
     {
+        // Berikan akses ke semua menu untuk Super Admin
+        $menuIds = Menu::pluck('id');
+        foreach ($menuIds as $menuId) {
+            UserMenu::create([
+                'id_users' => 'MLIIOF0001',
+                'id_menu' => $menuId,
+            ]);
+        }
 
-        UserMenu::create([
-            'id_employees' => 'MLIIOF0001',
-            'id_menu' => 1,
-        ]);
-        // UserMenu::create([
-        //     'id_employees' => 'MLIIOF0001',
-        //     'id_menu' => 2,
-        // ]);
-        // UserMenu::create([
-        //     'id_employees' => 'MLIIOF0001',
-        //     'id_menu' => 3,
-        // ]);
-        // UserMenu::create([
-        //     'id_employees' => 'MLIIOF0001',
-        //     'id_menu' => 4,
-        // ]);
-        // UserMenu::create([
-        //     'id_employees' => 'MLIIOF0001',
-        //     'id_menu' => 5,
-        // ]);
-        // UserMenu::create([
-        //     'id_employees' => 'MLIIOF0001',
-        //     'id_menu' => 6,
-        // ]);
+        // Untuk user lain, secara default tidak diberikan akses khusus
+        // Akses akan diberikan melalui halaman admin
     }
 }
 

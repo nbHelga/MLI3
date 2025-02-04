@@ -39,10 +39,10 @@
         </div>
       </form>
   
-      <p class="mt-10 text-center text-sm/6 text-gray-500">
+      {{-- <p class="mt-10 text-center text-sm/6 text-gray-500">
         Just a Guest?
         <a href="{{ route('welcome') }}" class="font-semibold text-indigo-600 hover:text-indigo-500">Click here!</a>
-      </p>
+      </p> --}}
     </div>
   </div>
   

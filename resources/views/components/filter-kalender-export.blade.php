@@ -11,17 +11,17 @@
     }
 }" class="flex gap-x-2 items-center">
     <div class="flex gap-x-2 items-center">
-        <div>
-            <label for="start_date" class="block text-sm font-medium text-gray-700">Dari</label>
+        <div class="flex">
+            <label for="start_date" class="pr-4 pt-1 block text-sm font-medium text-gray-500">Dari</label>
             <input type="date" 
                    x-model="startDate"
-                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                   class="mt-1 block w-full rounded-md border-gray-500 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
         </div>
-        <div>
-            <label for="end_date" class="block text-sm font-medium text-gray-700">Sampai</label>
+        <div class="flex">
+            <label for="end_date" class="pr-4 pt-1 block text-sm font-medium text-gray-500">Sampai</label>
             <input type="date" 
                    x-model="endDate"
-                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                   class="mt-1 block w-full rounded-md border-gray-500 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
         </div>
     </div>
     <button @click="addFilter('tanggal', {start: startDate, end: endDate})"

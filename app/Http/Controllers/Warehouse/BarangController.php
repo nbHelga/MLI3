@@ -208,16 +208,28 @@ class BarangController extends Controller
             'kode.unique' => 'Kode sudah digunakan',
             'kode.required' => 'Kode barang harus diisi',
             'nama.required' => 'Nama barang harus diisi'
-            // 'jumlah.integer' => 'Jumlah harus berupa angka',
-            // 'jumlah.min' => 'Jumlah minimal 0'
         ]);
 
         try {
             // Menggunakan timestamp dengan timezone Asia/Jakarta
             $data = $request->all();
-            Barang::create($data);
+            Barang::create(attributes: $data);
             
-            return back()->with('showDialog', true);
+            // Cek akses menu user menggunakan relasi menus
+            $user = auth()->user();
+            $hasCS01Access = $user->menus()->where('submenu', 'CS01')->exists();
+            $hasCS02Access = $user->menus()->where('submenu', 'CS02')->exists();
+            
+            // Tentukan redirect berdasarkan akses
+            if ($hasCS01Access) {
+                return redirect()->route('warehouse.product-list2')->with('showDialog', true);
+            } else if ($hasCS02Access) {
+                return redirect()->route('warehouse.product-list')->with('showDialog', true);
+            }
+            
+            // Default redirect jika memiliki kedua akses
+            return redirect()->route('warehouse.product-list2')->with('showDialog', true);
+            
         } catch (\Exception $e) {
             return back()
                 ->withInput()
@@ -249,7 +261,7 @@ class BarangController extends Controller
             if ($existingBarang) {
                 // Redirect ke product list dengan pesan error
                 session()->flash('error', 'Oops');
-                return redirect()->route('warehouse.product-list');
+                return $this->getRedirectBasedOnAccess();
             }
 
             // Update data
@@ -263,15 +275,28 @@ class BarangController extends Controller
             
             // Flash message untuk update sukses
             session()->flash('update_success', true);
-            
-            // Redirect ke product list
-            return redirect()->route('warehouse.product-list');
+            return $this->getRedirectBasedOnAccess();
             
         } catch (\Exception $e) {
-            // Redirect ke product list dengan pesan error
             session()->flash('error', 'Oops');
+            return $this->getRedirectBasedOnAccess();
+        }
+    }
+
+    // Helper method untuk menentukan redirect berdasarkan akses
+    private function getRedirectBasedOnAccess()
+    {
+        $user = auth()->user();
+        $hasCS01Access = $user->menus()->where('submenu', 'CS01')->exists();
+        $hasCS02Access = $user->menus()->where('submenu', 'CS02')->exists();
+        
+        if ($hasCS01Access) {
+            return redirect()->route('warehouse.product-list2');
+        } else if ($hasCS02Access) {
             return redirect()->route('warehouse.product-list');
         }
+        
+        return redirect()->route('warehouse.product-list2');
     }
 
     public function destroy($kode)

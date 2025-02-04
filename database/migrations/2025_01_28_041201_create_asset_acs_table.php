@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('asset_acs', function (Blueprint $table) {
             $table->id();
+            $table->string('kode',length:12); //AC-KANTOR-01
             $table->string('nama');
-            $table->string('status');
-            $table->string('kode');
+            $table->string('status'); // aktif/nonaktif 
             $table->text('lokasi');
             $table->string('divisi');
             $table->string('pic');

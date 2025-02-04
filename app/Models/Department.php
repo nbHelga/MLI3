@@ -9,6 +9,9 @@ class Department extends Model
 {
     /** @use HasFactory<\Database\Factories\AssetFactory> */
     use HasFactory;
-
+    protected $fillable = [
+        "kode_dept",
+        "nama_dept",
+    ];
     
 }

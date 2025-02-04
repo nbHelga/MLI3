@@ -6,7 +6,7 @@
 <div class="container mx-auto px-4 py-8">
     <div class="space-y-4">
         <form method="POST" 
-              action="{{ isset($suhu) ? route('maintenance.suhu.update', $suhu->id) : route('maintenance.suhu.store') }}" 
+              action="{{ isset($suhu) ? route('suhu.update', $suhu->id) : route('suhu.store') }}" 
               enctype="multipart/form-data" 
               id="suhuForm" 
               onsubmit="return confirmSubmit(event)">
@@ -95,7 +95,7 @@
 
                 <!-- Buttons -->
                 <div class="mt-6 flex items-center justify-end gap-x-6">
-                    <a href="{{ route('maintenance.suhu.list') }}" 
+                    <a href="{{ route('suhu.list') }}" 
                        class="text-sm font-semibold text-gray-900">
                         Cancel
                     </a>

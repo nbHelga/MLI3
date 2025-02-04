@@ -31,7 +31,8 @@ class="relative inline-block text-left">
     <!-- Dropdown Menu -->
     <div x-show="open" 
          @click.away="open = false"
-         class="absolute right-0 z-40 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+         class="absolute right-0 z-50 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5"
+         style="transform: translateY(-100%);">
         <div class="py-1">
             <!-- Edit Button -->
             <a href="{{ route('warehouse.barangpallet-' . strtolower($barangPallet->tempat->nama), $id) }}" 
@@ -56,10 +57,8 @@ class="relative inline-block text-left">
 
     <!-- Delete Warning Dialog -->
     <div x-show="showDeleteDialog" 
-         class="fixed inset-0 z-50 overflow-y-auto" 
-         aria-labelledby="modal-title" 
-         role="dialog" 
-         aria-modal="true">
+         class="fixed inset-0 z-[60] overflow-y-auto"
+         style="background: rgba(0,0,0,0.5);">
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <!-- Background overlay -->
             <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" 

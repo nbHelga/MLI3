@@ -10,9 +10,14 @@
                     <div class="sm:mx-auto sm:w-full sm:max-w-lg">
                         <h2 class="text-center text-2xl font-bold tracking-tight text-gray-900">Pencatatan Maintenance Fasilitas</h2>
                     </div>
-                    @include('elements.input-nama')
-                    @include('elements.input-kode')
-                    @include('elements.input-keterangan')
+                    <div class="items-center">
+                        <label for="kode" class="block text-sm font-medium text-gray-900">Kode</label>
+                        @include('elements.input-nama', ['name' => 'kode'])
+                    </div>
+                    <div class="items-center">
+                        <label for="keterangan" class="block text-sm font-medium text-gray-900">Keterangan</label>
+                        @include('elements.input-keterangan', ['name' => 'keterangan']) 
+                    </div>
 
                     <div class="mt-6 flex items-center justify-end gap-x-6">
                         <button type="button" class="text-sm font-semibold text-gray-900">Cancel</button>

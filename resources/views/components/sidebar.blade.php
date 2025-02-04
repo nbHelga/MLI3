@@ -1,6 +1,11 @@
+@php
+    $user = Auth::user();
+    $accessibleMenus = $user->getAccessibleMenus();
+@endphp
+
 <aside class="bg-white text-white w-16 min-h-screen fixed left-0 top-0 z-50">
     <nav class="flex flex-col items-center py-20 space-y-4" x-data="{ activeMenu: null }">
-        <!-- HRIS -->
+        {{-- <!-- Menu HRIS (Selalu tampil) --> Menu HRIS dipindah di home (tidak di sidebar)
         <div class="relative" x-data="{ open: false }">
             <button 
                 @click="activeMenu = (activeMenu === 'hris' ? null : 'hris'); open = !open"
@@ -16,9 +21,10 @@
                 <x-submenu.list-surat />
                 <x-submenu.form-surat />
             </div>
-        </div>
+        </div> --}}
 
-        <!-- HRD -->
+        <!-- Menu HRD -->
+        @if(in_array('HRD', $accessibleMenus))
         <div class="relative" x-data="{ open: false }">
             <button 
                 @click="activeMenu = (activeMenu === 'hrd' ? null : 'hrd'); open = !open"
@@ -52,8 +58,10 @@
                 </div>
             </div>
         </div>
+        @endif
 
-        <!-- Finance -->
+        <!-- Menu Finance -->
+        @if(in_array('Finance', $accessibleMenus))
         <div class="relative" x-data="{ open: false }">
             <button 
                 @click="activeMenu = (activeMenu === 'finance' ? null : 'finance'); open = !open"
@@ -69,8 +77,10 @@
                 <x-submenu.list-surat-fin />
             </div>
         </div>
+        @endif
 
-        <!-- Warehouse -->
+        <!-- Menu Warehouse -->
+        @if(in_array('Warehouse', $accessibleMenus))
         <div class="relative" x-data="{ open: false }">
             <button 
                 @click="activeMenu = (activeMenu === 'warehouse' ? null : 'warehouse'); open = !open"
@@ -81,46 +91,88 @@
             </button>
             <div 
                 x-show="activeMenu === 'warehouse'"
-                class="absolute left-16 top-0 bg-white shadow-lg rounded-lg p-2 w-[600px] z-50"
+                class="absolute left-16 top-0 bg-white shadow-lg rounded-lg p-4 z-50"
+                :class="{
+                    'w-[300px]': hasOnlyOneAccess,
+                    'w-[700px]': !hasOnlyOneAccess
+                }"
             >
-                <div class="flex space-x-4">
-                    <!-- Barang -->
-                    <div class="w-1/4">
-                        <h3 class="font-bold text-gray-700 mb-2 text-center">Barang</h3>
-                        <x-submenu.list-barang2 />
-                        <x-submenu.list-barang />
-                        <x-submenu.form-barang />
-                    </div>
-                    <!-- Garis Pemisah -->
-                    <div class="w-px bg-gray-300"></div>
-                    <!-- Perpindahan Barang Gudang -->
-                    <div class="w-3/4">
-                        <h3 class="font-bold text-gray-700 mb-2 text-center">Penempatan Ikan dan Kode Pallet</h3>
-                        <div class="flex space-x-4">
-                            <div class="w-1/3">
-                                <h4 class="font-semibold text-gray-600 mb-1 text-center">CS01</h4>
-                                <x-submenu.list-barang-gudang-cs01 />
-                                <x-submenu.form-barang-gudang-cs01 />
-                            </div>
-                            <!-- CS02 -->
-                            <div class="w-1/3">
-                                <h4 class="font-semibold text-gray-600 mb-1 text-center">CS02</h4>
-                                <x-submenu.list-barang-gudang-cs02 />
-                                <x-submenu.form-barang-gudang-cs02 />
-                            </div>
-                            <!-- Masal -->
-                            <div class="w-1/3">
-                                <h4 class="font-semibold text-gray-600 mb-1 text-center">Masal</h4>
-                                <x-submenu.list-barang-gudang-masal />
-                                <x-submenu.form-barang-gudang-masal />
-                            </div>
+                <h3 class="font-bold text-gray-700 mb-4 text-center text-lg">Penempatan Ikan dan Kode Pallet</h3>
+                <div class="flex" :class="{'space-x-6': !hasOnlyOneAccess}">
+                    <!-- Barang Section -->
+                    <div class="flex-1">
+                        <h3 class="font-bold text-gray-700 mb-3 text-center border-b-2 border-gray-200 pb-2">Barang</h3>
+                        <div class="space-y-3 px-2">
+                            @if($user->hasSubmenu('Warehouse', 'CS01'))
+                                <x-submenu.list-barang2/>
+                            @endif
+                            @if($user->hasSubmenu('Warehouse', 'CS02'))
+                                <x-submenu.list-barang/>
+                            @endif
+                            @if($user->status === 'Administrator' || $user->status === 'Super Admin')
+                                <x-submenu.form-barang/>
+                            @endif
                         </div>
                     </div>
+
+                    <!-- Vertical Separator for CS01 -->
+                    @if($user->hasSubmenu('Warehouse', 'CS01'))
+                        <div class="w-px bg-gray-200 self-stretch mx-2"></div>
+                        <div class="flex-1">
+                            <h3 class="font-bold text-gray-700 mb-3 text-center border-b-2 border-gray-200 pb-2">CS01</h3>
+                            <div class="space-y-3 px-2">
+                                <x-submenu.list-barang-gudang-cs01 />
+                                @if($user->status === 'Administrator' || $user->status === 'Super Admin')
+                                    <x-submenu.form-barang-gudang-cs01 />
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- Vertical Separator for CS02 -->
+                    @if($user->hasSubmenu('Warehouse', 'CS02'))
+                        <div class="w-px bg-gray-200 self-stretch mx-2"></div>
+                        <div class="flex-1">
+                            <h3 class="font-bold text-gray-700 mb-3 text-center border-b-2 border-gray-200 pb-2">CS02</h3>
+                            <div class="space-y-3 px-2">
+                                <x-submenu.list-barang-gudang-cs02 />
+                                @if($user->status === 'Administrator' || $user->status === 'Super Admin')
+                                    <x-submenu.form-barang-gudang-cs02 />
+                                @endif
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
+        @endif
 
-        <!-- Maintenance -->
+         <!-- Menu Suhu (terpisah) -->
+         @if(in_array('Suhu', $accessibleMenus))
+         <div class="relative" x-data="{ open: false }">
+             <button 
+                 @click="activeMenu = (activeMenu === 'suhu' ? null : 'suhu'); open = !open"
+                 class="p-2 hover:bg-gray-700 rounded-lg"
+                 :class="{'bg-gray-700': activeMenu === 'suhu'}"
+             >
+                 <img src="{{ asset('suhu-icon.png') }}" alt="Suhu" class="w-8 h-8">
+             </button>
+             <div 
+                 x-show="activeMenu === 'suhu'"
+                 class="absolute left-16 top-0 bg-white shadow-lg rounded-lg p-2 w-48 z-50"
+             >
+                 <div>
+                     <x-submenu.list-suhu-all />
+                     @if($user->status !== 'Operator')
+                         <x-submenu.form-suhu-all />
+                     @endif
+                 </div>
+             </div>
+         </div>
+         @endif
+
+        <!-- Menu Maintenance (tanpa submenu suhu) -->
+        @if(in_array('Maintenance', $accessibleMenus))
         <div class="relative" x-data="{ open: false }">
             <button 
                 @click="activeMenu = (activeMenu === 'maintenance' ? null : 'maintenance'); open = !open"
@@ -131,49 +183,47 @@
             </button>
             <div 
                 x-show="activeMenu === 'maintenance'"
+                class="absolute left-16 top-0 bg-white shadow-lg rounded-lg p-2 w-48 z-50"
+            >
+                <div class="space-y-4">
+                    {{-- @if($user->hasSubmenu('Maintenance', 'Aset')) --}}
+                        {{-- <h3 class="font-bold text-gray-700 mb-2 text-center">Maintenance</h3> --}}
+                        <x-submenu.list-maintenance />
+                        <x-submenu.form-maintenance />
+                    {{-- @endif --}}
+                </div>
+            </div>
+        </div>
+        @endif
+
+        <!-- Menu Security -->
+        @if(in_array('Security', $accessibleMenus))
+        <div class="relative" x-data="{ open: false }">
+            <button 
+                @click="activeMenu = (activeMenu === 'security' ? null : 'security'); open = !open"
+                class="p-2 hover:bg-gray-700 rounded-lg"
+                :class="{'bg-gray-700': activeMenu === 'security'}"
+            >
+                <img src="{{ asset('security.png') }}" alt="Security" class="w-8 h-8">
+            </button>
+            <div 
+                x-show="activeMenu === 'security'"
                 class="absolute left-16 top-0 bg-white shadow-lg rounded-lg p-2 w-[500px] z-50"
             >
                 <div class="flex space-x-4">
-                    <!-- Suhu -->
                     <div class="w-1/2">
-                        <h3 class="font-bold text-gray-700 mb-2 text-center">Suhu</h3>
-                        {{-- <div class="flex space-x-4"> --}}
-                            {{-- <div class="w-1/2">
-                                <h4 class="font-semibold text-gray-600 mb-1">CS01</h4>
-                                <x-submenu.list-suhu-cs01 />
-                                <x-submenu.form-suhu-cs01 />
-                            </div>
-                            <div class="w-1/2">
-                                <h4 class="font-semibold text-gray-600 mb-1">CS02</h4>
-                                <x-submenu.list-suhu-cs02 />
-                                <x-submenu.form-suhu-cs02 />
-                            </div> --}}
-                            <div>
-                                <x-submenu.list-suhu-all />
-                                <x-submenu.form-suhu-all />
-                            </div>
-                        {{-- </div> --}}
+                        <x-submenu.list-satpam />
                     </div>
-                    <!-- Garis Pemisah -->
-                    <div class="w-px bg-gray-300"></div>
-                    <!-- Maintenance -->
                     <div class="w-1/2">
-                        <h3 class="font-bold text-gray-700 mb-2 text-center">Maintenance</h3>
-                        <x-submenu.list-maintenance />
-                        <x-submenu.form-maintenance />
+                        <x-submenu.form-satpam />
                     </div>
                 </div>
             </div>
         </div>
+        @endif
 
-        <!-- Admin -->
-        <div class="relative">
-            <a href="{{ route('admin.superadmin') }}" class="p-2 hover:bg-gray-700 rounded-lg block">
-                <img src="{{ asset('admin-icon.png') }}" alt="Admin" class="w-8 h-8">
-            </a>
-        </div>
-
-        <!-- Laporan -->
+        <!-- Menu Laporan dengan akses terbatas -->
+        @if(in_array('Warehouse, Suhu, Maintenance', $accessibleMenus)||($user->status === 'Super Admin'))
         <div class="relative" x-data="{ open: false }">
             <button 
                 @click="activeMenu = (activeMenu === 'laporan' ? null : 'laporan'); open = !open"
@@ -187,35 +237,39 @@
                 class="absolute left-16 top-0 bg-white shadow-lg rounded-lg p-2 w-[500px] z-50"
             >
                 <div class="flex space-x-4">
-                    <div class = "w-1/2">
-                        <x-submenu.laporan-barang />
-                        <x-submenu.laporan-pallet />
+                    <div class="w-1/2">
+                        @if(in_array('Warehouse', $accessibleMenus))
+                            {{-- Submenu laporan barang --}}
+                            <x-submenu.laporan-barang />
+                            {{-- Submenu laporan pallet --}}
+                            <x-submenu.laporan-pallet />
+                        @endif
                     </div>
-                    <div class = "w-1/2">
-                        <x-submenu.laporan-suhu />
-                        <x-submenu.laporan-aset />
-                        <x-submenu.laporan-maintenance />
+                    <div class="w-1/2">
+                        @if(in_array('Suhu', $accessibleMenus))
+                            {{-- Submenu laporan suhu --}}
+                            <x-submenu.laporan-suhu />
+                        @endif
+                        @if(in_array('Maintenance', $accessibleMenus))
+                            {{-- Submenu laporan aset --}}
+                            <x-submenu.laporan-aset />
+                            {{-- Submenu laporan maintenance --}}
+                            <x-submenu.laporan-maintenance />
+                        @endif
                     </div>
                 </div>
             </div>
         </div>
+        @endif
 
-        <!-- Security -->
-        <div class="relative" x-data="{ open: false }">
-            <button 
-                @click="activeMenu = (activeMenu === 'security' ? null : 'security'); open = !open"
-                class="p-2 hover:bg-gray-700 rounded-lg"
-                :class="{'bg-gray-700': activeMenu === 'security'}"
-            >
-                <img src="{{ asset('security-icon.png') }}" alt="Security" class="w-8 h-8">
-            </button>
-            <div 
-                x-show="activeMenu === 'security'"
-                class="absolute left-16 top-0 bg-white shadow-lg rounded-lg p-2 w-48 z-50"
-            >
-                <x-submenu.list-satpam />
-                <x-submenu.form-satpam />
-            </div>
+        <!-- Menu Admin -->
+        @if($user->status === 'Super Admin')
+        <div class="relative">
+            <a href="{{ route('admin.superadmin') }}" class="p-2 hover:bg-gray-700 rounded-lg block">
+                <img src="{{ asset('admin-icon.png') }}" alt="Admin" class="w-8 h-8">
+            </a>
         </div>
+        @endif
+
     </nav>
 </aside>

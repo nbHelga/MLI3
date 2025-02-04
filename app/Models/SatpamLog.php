@@ -12,9 +12,10 @@ class SatpamLog extends Model
         'nama_tamu',
         'no_hp',
         'keperluan',
-        'bertemu_siapa',
+        'bertemu_dengan',
         'ada_janji',
     ];
     /** @use HasFactory<\Database\Factories\SatpamLogFactory> */
     use HasFactory;
+    
 }

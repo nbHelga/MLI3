@@ -170,7 +170,7 @@ class SuhuController extends Controller
         Suhu::create($data);
 
         return redirect()
-            ->route('maintenance.suhu.list')
+            ->route('suhu.list')
             ->with('add_success', true);
     }
 
@@ -247,7 +247,7 @@ class SuhuController extends Controller
         $suhu->update($data);
 
         return redirect()
-            ->route('maintenance.suhu.list')
+            ->route('suhu.list')
             ->with('update_success', true);
     }
 

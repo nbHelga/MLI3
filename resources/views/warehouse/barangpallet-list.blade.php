@@ -94,7 +94,16 @@
                     :palletCodes="$palletCodes"
                 /> --}}
                 <!-- Other components -->
-                <x-import-modal :route="route('warehouse.barangpallet.import')" />
+                @php
+                    $user = auth()->user();
+                    $isAdminOrSuperAdmin = in_array($user->status, ['Administrator', 'Super Admin']);
+                @endphp
+
+                <div class="flex pt-4 space-x-2">
+                    @if($isAdminOrSuperAdmin)
+                        <x-import-modal :route="route('warehouse.barangpallet.import')" />
+                    @endif
+                </div>
             </div>
             <div class="flex space-x-4">
             </div>

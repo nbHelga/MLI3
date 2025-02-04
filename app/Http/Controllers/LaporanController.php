@@ -5,14 +5,37 @@ namespace App\Http\Controllers;
 use App\Models\PencatatanBarangGudang;
 use App\Models\Suhu;
 use App\Exports\PencatatanBarangGudangExport;
+use App\Exports\PencatatanBarangGudangPdfExport;
 use App\Exports\SuhuExport;
+use App\Exports\SuhuPdfExport;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use App\Models\Tempat;
+use App\Models\Barang;
+use App\Exports\BarangPdfExport;
+use App\Exports\BarangExport;
 
 class LaporanController extends Controller
 {
+    protected $allRoomsMapping = [
+        'CS01' => [
+            'Room 1' => ['id' => 1],
+            'Room 2' => ['id' => 2],
+            'Room 3' => ['id' => 3]
+        ],
+        'CS02' => [
+            'Room 1' => ['id' => 4],
+            'Room 2' => ['id' => 5],
+            'Room 3' => ['id' => 6],
+            'Room 4' => ['id' => 7]
+        ],
+        'MASAL' => [
+            'Room 1' => ['id' => 8]
+        ]
+    ];
+
     public function pallet()
     {
         // Mengambil kode pallet unik dengan cara yang sama seperti di BarangPalletController
@@ -37,6 +60,16 @@ class LaporanController extends Controller
     public function suhu()
     {
         return view('laporan.suhu');
+    }
+
+    public function barang()
+    {
+        $filters = [
+            'kualitas' => ['SP', 'KW', 'COP', 'CC', 'MT', 'PP', 'BS', 'DF', 'RUT'],
+            'size' => \App\Models\Barang::select('size')->distinct()->pluck('size')->filter()
+        ];
+
+        return view('laporan.barang', compact('filters'));
     }
 
     public function exportPallet(Request $request)
@@ -95,14 +128,23 @@ class LaporanController extends Controller
                 }
             }
 
+            // Flag untuk mengecek apakah sudah join dengan tabel tempat
+            $hasTempatJoin = false;
+
             // Terapkan pengurutan berdasarkan prioritas
             foreach ($sorts as $sort) {
                 switch ($sort['value']) {
                     case 'tempat':
-                        $query->orderBy('tempat.nama');
-                        break;
                     case 'ruangan':
-                        $query->orderBy('tempat.ruangan');
+                        if (!$hasTempatJoin) {
+                            $query->leftJoin('tempat', 'pencatatan_barang_gudang.id_tempat', '=', 'tempat.id');
+                            $hasTempatJoin = true;
+                        }
+                        if ($sort['value'] === 'tempat') {
+                            $query->orderBy('tempat.nama');
+                        } else {
+                            $query->orderBy('tempat.ruangan');
+                        }
                         break;
                     case 'pallet':
                         $query->orderBy('kode_pallet');
@@ -110,11 +152,23 @@ class LaporanController extends Controller
                 }
             }
 
+            // Pastikan select hanya mengambil kolom dari tabel utama untuk menghindari duplikasi
+            if ($hasTempatJoin) {
+                $query->select('pencatatan_barang_gudang.*');
+            }
+
             $data = $query->get();
             $fileName = date('Y-m-d') . '_Daftar_Pencatatan_Ikan_Dan_Kode_Pallet';
 
             if($request->format === 'excel') {
-                return Excel::download(new PencatatanBarangGudangExport($data), $fileName . '.xlsx');
+                return Excel::download(
+                    new PencatatanBarangGudangExport($data, $filters, $sorts), 
+                    $fileName . '.xlsx'
+                );
+            }
+            else if ($request->format === 'pdf') {
+                $export = new PencatatanBarangGudangPdfExport($data, $filters, $sorts);
+                return $export->export();
             }
 
         } catch (\Exception $e) {
@@ -132,27 +186,6 @@ class LaporanController extends Controller
             $filters = json_decode($request->filters, true) ?? [];
             $sorts = json_decode($request->sorts, true) ?? [];
 
-            // Definisi mapping ruangan - sesuaikan dengan case di database
-            $allRoomsMapping = [
-                'CS01' => [
-                    'Room 1' => ['id' => 1],
-                    'Room 2' => ['id' => 2],
-                    'Room 3' => ['id' => 3]
-                ],
-                'CS02' => [
-                    'Room 1' => ['id' => 4],
-                    'Room 2' => ['id' => 5],
-                    'Room 3' => ['id' => 6],
-                    'Room 4' => ['id' => 7]
-                ],
-                'MASAL' => [
-                    'Room 1' => ['id' => 8]
-                ],
-                'Kantor' => [
-                    '' => ['id' => 9]
-                ]
-            ];
-
             // Inisialisasi query dasar
             $query = Suhu::with(['tempat', 'employee']);
 
@@ -162,13 +195,13 @@ class LaporanController extends Controller
             // Menyiapkan konfigurasi tempat yang akan ditampilkan
             $selectedTempatRuangan = [];
             $validTempatIds = [];
-            $tempatOrder = ['CS01', 'CS02', 'MASAL']; // Urutan default tempat
+            $tempatOrder = ['CS01', 'CS02', 'MASAL'];
 
+            // Filter berdasarkan tempat dan ruangan
             if ($groupedFilters->has('tempat-ruangan')) {
                 foreach ($groupedFilters['tempat-ruangan'] as $filter) {
                     $tempat = strtoupper($filter['tempat']);
                     
-                    // Jika tempat spesifik dipilih (bukan 'all')
                     if ($tempat !== 'all') {
                         if (!isset($selectedTempatRuangan[$tempat])) {
                             $selectedTempatRuangan[$tempat] = [];
@@ -177,16 +210,16 @@ class LaporanController extends Controller
                         $ruangan = $filter['ruangan'];
                         
                         if ($ruangan === 'all') {
-                            if (isset($allRoomsMapping[$tempat])) {
-                                $selectedTempatRuangan[$tempat] = array_keys($allRoomsMapping[$tempat]);
-                                foreach ($allRoomsMapping[$tempat] as $roomConfig) {
+                            if (isset($this->allRoomsMapping[$tempat])) {
+                                $selectedTempatRuangan[$tempat] = array_keys($this->allRoomsMapping[$tempat]);
+                                foreach ($this->allRoomsMapping[$tempat] as $roomConfig) {
                                     $validTempatIds[] = $roomConfig['id'];
                                 }
                             }
                         } else {
-                            if (isset($allRoomsMapping[$tempat][$ruangan])) {
+                            if (isset($this->allRoomsMapping[$tempat][$ruangan])) {
                                 $selectedTempatRuangan[$tempat][] = $ruangan;
-                                $validTempatIds[] = $allRoomsMapping[$tempat][$ruangan]['id'];
+                                $validTempatIds[] = $this->allRoomsMapping[$tempat][$ruangan]['id'];
                             }
                         }
                     }
@@ -198,31 +231,61 @@ class LaporanController extends Controller
                 $query->whereIn('id_tempat', $validTempatIds);
             }
 
+            // Filter tanggal jika ada
+            if ($groupedFilters->has('tanggal')) {
+                $tanggalFilter = $groupedFilters['tanggal']->first();
+                if ($tanggalFilter) {
+                    // Periksa apakah tanggal dalam format value atau start/end
+                    if (isset($tanggalFilter['value'])) {
+                        $dateValue = is_string($tanggalFilter['value']) ? 
+                                   json_decode($tanggalFilter['value'], true) : 
+                                   $tanggalFilter['value'];
+                        
+                        if (isset($dateValue['start']) && isset($dateValue['end'])) {
+                            $query->whereBetween('created_at', [
+                                Carbon::parse($dateValue['start'])->startOfDay(),
+                                Carbon::parse($dateValue['end'])->endOfDay()
+                            ]);
+                        } else {
+                            // Jika hanya satu tanggal
+                            $singleDate = Carbon::parse($dateValue);
+                            $query->whereDate('created_at', $singleDate);
+                        }
+                    } else if (isset($tanggalFilter['start']) && isset($tanggalFilter['end'])) {
+                        $query->whereBetween('created_at', [
+                            Carbon::parse($tanggalFilter['start'])->startOfDay(),
+                            Carbon::parse($tanggalFilter['end'])->endOfDay()
+                        ]);
+                    } else {
+                        // Log untuk debugging
+                        \Log::warning('Unexpected date filter format:', ['filter' => $tanggalFilter]);
+                    }
+                }
+            }
+
             // Ambil data sesuai filter
             $data = $query->get();
 
-            // Hitung posisi kolom untuk setiap tempat
+            // Hitung posisi kolom untuk setiap tempat yang dipilih
             $tempatConfig = [];
-            $currentStartCol = 'A';
-            $selectedTempat = array_keys($selectedTempatRuangan);
+            $currentStartCol = 'C';
 
             foreach ($tempatOrder as $tempat) {
-                if (in_array($tempat, $selectedTempat)) {
+                if (isset($selectedTempatRuangan[$tempat])) {
                     $ruangans = $selectedTempatRuangan[$tempat];
                     if (!empty($ruangans)) {
                         $roomConfig = [];
                         $colIndex = $this->getColumnNumber($currentStartCol);
 
-                        foreach ($allRoomsMapping[$tempat] as $room => $config) {
+                        foreach ($this->allRoomsMapping[$tempat] as $room => $config) {
                             if (in_array($room, $ruangans)) {
-                                $startCol = $this->getColumnId($colIndex);
-                                $endCol = $this->getColumnId($colIndex + 4);
-                                
                                 $roomConfig[$room] = [
                                     'id' => $config['id'],
-                                    'cols' => [$startCol, $endCol]
+                                    'cols' => [
+                                        $this->getColumnId($colIndex),
+                                        $this->getColumnId($colIndex + 4)
+                                    ]
                                 ];
-                                
                                 $colIndex += 5;
                             }
                         }
@@ -232,20 +295,18 @@ class LaporanController extends Controller
                                 'startCol' => $currentStartCol,
                                 'rooms' => $roomConfig
                             ];
-                            $currentStartCol = $this->getColumnId($colIndex + 1); // Tambah 1 untuk jarak
+                            $currentStartCol = $this->getColumnId($colIndex + 1);
                         }
                     }
                 }
             }
 
-            \Log::info('Export configuration:', [
-                'selected_tempat' => $selectedTempatRuangan,
-                'tempat_config' => $tempatConfig,
-                'data_count' => $data->count()
-            ]);
-
             if($request->format === 'excel') {
                 return (new SuhuExport($data, $filters, $sorts, $tempatConfig))->export();
+            }
+            else if ($request->format === 'pdf') {
+                $export = new SuhuPdfExport($data, $filters, $sorts, $tempatConfig);
+                return $export->export();
             }
 
         } catch (\Exception $e) {
@@ -280,5 +341,112 @@ class LaporanController extends Controller
         }
         
         return $columnId;
+    }
+
+    public function exportBarang(Request $request)
+    {
+        try {
+            $query = Barang::query();
+            
+            // Decode filters dari request
+            $filters = json_decode($request->filters, true) ?? [];
+            
+            // Log filters yang diterima
+            Log::info('Received filters:', ['filters' => $filters]);
+            
+            // Kelompokkan filter berdasarkan tipe
+            $groupedFilters = collect($filters)->groupBy('type');
+            
+            Log::info('Grouped filters:', ['groupedFilters' => $groupedFilters->toArray()]);
+
+            // Filter untuk kualitas dan size menggunakan OR condition
+            $query = $query->where(function($q) use ($groupedFilters) {
+                // Filter untuk kualitas
+                if ($groupedFilters->has('kualitas')) {
+                    $kualitasValues = $groupedFilters['kualitas']
+                        ->pluck('value')
+                        ->filter(fn($value) => $value !== 'all')
+                        ->values()
+                        ->all();
+
+                    Log::info('Kualitas values:', ['values' => $kualitasValues]);
+
+                    if (!empty($kualitasValues)) {
+                        $q->orWhereIn('kualitas', $kualitasValues);
+                    }
+                }
+
+                // Filter untuk size
+                if ($groupedFilters->has('size')) {
+                    $sizeValues = $groupedFilters['size']
+                        ->pluck('value')
+                        ->filter(fn($value) => $value !== 'all')
+                        ->values()
+                        ->all();
+
+                    Log::info('Size values:', ['values' => $sizeValues]);
+
+                    if (!empty($sizeValues)) {
+                        $q->orWhereIn('size', $sizeValues);
+                    }
+                }
+            });
+
+            // Filter untuk tanggal (tetap menggunakan AND karena ini adalah range)
+            if ($groupedFilters->has('tanggal')) {
+                $tanggalFilter = $groupedFilters['tanggal']->first();
+                if ($tanggalFilter && isset($tanggalFilter['value'])) {
+                    $dateRange = $tanggalFilter['value'];
+                    $query = $query->whereBetween('created_at', [
+                        Carbon::parse($dateRange['start'])->startOfDay(),
+                        Carbon::parse($dateRange['end'])->endOfDay()
+                    ]);
+                    
+                    Log::info('Date range:', ['range' => $dateRange]);
+                }
+            }
+            
+            // Log the final SQL query
+            Log::info('Final SQL:', [
+                'sql' => $query->toSql(),
+                'bindings' => $query->getBindings()
+            ]);
+            
+            $data = $query->get();
+            
+            // Log the result count
+            Log::info('Query result count:', ['count' => $data->count()]);
+            
+            if ($request->format === 'excel') {
+                // Pass data langsung ke BarangExport tanpa query lagi
+                return Excel::download(
+                    new BarangExport($data, $filters),
+                    date('Y-m-d') . '_Laporan_Barang.xlsx'
+                );
+            }
+            else if ($request->format === 'pdf') {
+                try {
+                    $export = new BarangPdfExport($data, $filters);
+                    return $export->export();
+                } catch (\Exception $e) {
+                    Log::error('PDF Export Error:', [
+                        'message' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                    throw $e;
+                }
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Error in exportBarang:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat mengekspor data: ' . $e->getMessage()
+            ], 500);
+        }
     }
 } 

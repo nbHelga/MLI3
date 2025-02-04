@@ -22,7 +22,7 @@
             }
         },
         
-        deleteSelected() {
+        {{-- deleteSelected() {
             if (this.selected.length > 0) {
                 this.showDeleteDialog = true;
             }
@@ -41,7 +41,7 @@
             .catch(error => {
                 console.error('Delete error:', error);
             });
-        }
+        } --}}
      }">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
         <h1 class="text-2xl font-semibold text-gray-900">Daftar Barang Internasional</h1>
@@ -56,7 +56,16 @@
             <div class="flex justify-between items-center">
                 <x-filter-barang :categories="$categories" />
                 <!-- Import Button -->
-                <x-import-modal :route="route('warehouse.product.import')" />
+                @php
+                    $user = auth()->user();
+                    $isAdminOrSuperAdmin = in_array($user->status, ['Administrator', 'Super Admin']);
+                @endphp
+
+                <div class="flex pt-4 space-x-2">
+                    @if($isAdminOrSuperAdmin)
+                        <x-import-modal :route="route('warehouse.product.import')" />
+                    @endif
+                </div>
             </div>
 
             <!-- Table -->

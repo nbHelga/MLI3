@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Perusahaan extends Model
 {
-    protected $fillable = ['nama', 'kode'];
+    protected $fillable = ['kode', 'nama'];
     
     /** @use HasFactory<\Database\Factories\PerusahaanFactory> */
     use HasFactory;

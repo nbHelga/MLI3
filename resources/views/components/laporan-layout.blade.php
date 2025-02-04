@@ -94,9 +94,11 @@
         });
     }
 ">
-    <h1 class="text-2xl font-semibold text-gray-900 mb-6">{{ $title }}</h1>
+    <h1 class="text-2xl font-bold text-gray-900 mb-6">{{ $title }}</h1>
+    {{-- garis pembatas --}}
+    <div class="border-b border-gray-300 mb-6"></div>
 
-    <!-- Tabs -->
+    {{-- <!-- Tabs -->
     <div class="border-b border-gray-200 mb-6">
         <nav class="-mb-px flex space-x-8">
             <button @click="activeTab = 'filter'"
@@ -110,7 +112,7 @@
                 Format
             </button>
         </nav>
-    </div>
+    </div> --}}
 
     <!-- Content -->
     <div x-show="activeTab === 'filter'" class="space-y-6">
@@ -127,17 +129,30 @@
         </div>
     </div>
 
-    <!-- Export Button -->
+    <!-- Export Button dengan Dropdown -->
     <div class="mt-8">
-        <form :action="'{{ $attributes->get('action') }}'" :method="'{{ $attributes->get('method') ?? 'POST' }}'" class="flex justify-end">
-            @csrf
-            <input type="hidden" name="format" :value="format">
-            <input type="hidden" name="filters" :value="JSON.stringify(filters)">
-            <input type="hidden" name="sorts" :value="JSON.stringify(sorts)">
-            <button type="submit"
-                    class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700">
-                Export
-            </button>
-        </form>
+        <div class="flex justify-end">
+            <div class="relative" x-data="{ open: false }">
+                <button @click="open = !open" type="button" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none">
+                    Export
+                    <svg class="w-4 h-4 ml-2 -mr-1 inline" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+                <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+                    <form :action="'{{ $attributes->get('action') }}'" method="POST">
+                        @csrf
+                        <input type="hidden" name="filters" :value="JSON.stringify(filters)">
+                        <input type="hidden" name="sorts" :value="JSON.stringify(sorts)">
+                        <button type="submit" name="format" value="excel" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            Export Excel
+                        </button>
+                        <button type="submit" name="format" value="pdf" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            Export PDF
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 </div> 

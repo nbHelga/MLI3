@@ -1,13 +1,3 @@
-<x-layout>
-    {{-- <x-slot:title>{{ $title }}</x-slot> --}}
-    <h3 class="text-x1">This is Home Page</h3>
-</x-layout>
-
-<x-layout>
-    {{-- <x-slot:title>{{ $title }}</x-slot> --}}
-    <h3 class="text-x1">This is Home Page</h3>
-</x-layout>
-
 @extends('layouts.layout')
 
 @section('title', 'Home')

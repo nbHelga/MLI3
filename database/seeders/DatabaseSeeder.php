@@ -36,20 +36,21 @@ class DatabaseSeeder extends Seeder
         //     'slug'=> 'judul-1',
         //     'body'=>'A seeder class only contains one method by default: run. This method is called when the db:seed Artisan command is executed. Within the run method, you may insert data into your database however you wish. You may use the query builder to manually insert data or you may use Eloquent model factories.', 
         // ]);
-        $this->call([CategorySeeder::class, UserSeeder::class]);
-        Post::factory(100)->recycle([
-            Category::all(),
-            User::all(), 
-
-            
-        ])->create();
-
+        
         $this->call([
-            EmployeesSeeder::class,
+            PerusahaanSeeder::class,
+            DepartmentSeeder::class,
+            EmployeeSeeder::class,
             UserSeeder::class,
             MenuSeeder::class,
             UserMenuSeeder::class,
             TempatSeeder::class,
+            ACSeeder::class,
+            AparSeeder::class,
+            FacilitySeeder::class,
+            ForkliftSeeder::class,
+            NonEmployeeSeeder::class,
+            SuhuSeeder::class,
         ]);
     }
 }

@@ -1,5 +1,5 @@
-<div class="mt-4 p-4 bg-gray-50 rounded-md">
-    <h4 class="text-sm font-medium text-gray-900 mb-2">Keterangan Filter:</h4>
+<div class="bg-gray-50 rounded-md">
+    <h4 class="text-sm font-medium text-gray-900 mb-6">Keterangan Filter:</h4>
     <div class="space-y-2">
         <template x-for="(filter, index) in filters" :key="index">
             <div class="flex items-center justify-between text-sm text-gray-600">

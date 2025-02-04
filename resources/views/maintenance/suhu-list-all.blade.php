@@ -17,15 +17,22 @@
                     {{-- <x-search-suhu placeholder="Cari ruangan, suhu, atau keterangan..." /> --}}
                     <x-filter-tanggal />
                 </div>
+
+                @php
+                    $user = auth()->user();
+                    $isAdminOrSuperAdmin = in_array($user->status, ['Administrator', 'Super Admin']);
+                @endphp
+
                 <div class="flex items-center space-x-4">
-                    {{-- <x-filter-suhu :categories="$categories" /> --}}
-                    <a href="{{ route('maintenance.suhu.create') }}" 
-                       class="inline-flex items-center px-4 py-2 bg-white text-gray-900 rounded-md hover:bg-gray-400">
+                    @if($isAdminOrSuperAdmin)
+                        <a href="{{ route('suhu.create') }}" 
+                           class="inline-flex items-center px-4 py-2 bg-white text-gray-900 rounded-md hover:bg-gray-400">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>
                         <span class="font-semibold text-gray-600">Input Suhu</span>
                     </a>
+                    @endif
                 </div>
             </div>
     

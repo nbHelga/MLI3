@@ -19,8 +19,9 @@ return new class extends Migration
             $table->string('nama_tamu', length:20);
             $table->string('no_hp', length:15);
             $table->text('keperluan');
-            $table->text('bertemu_siapa');
-            $table->boolean('ada_janji');
+            $table->text('bertemu_dengan');
+            $table->string('ada_janji');
+            $table->text('keterangan')->nullable();
             $table->timestamps();
         });
     }

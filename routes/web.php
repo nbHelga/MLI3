@@ -5,7 +5,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Auth\LoginController;
-// use App\Http\Controllers\WarehouseController;
 use App\Http\Controllers\Warehouse\BarangController;
 use App\Http\Controllers\Warehouse\PalletController;
 use App\Http\Controllers\Warehouse\BarangPalletController;
@@ -14,6 +13,10 @@ use Illuminate\Support\Facades\View;
 use App\Http\Controllers\Maintenance\SuhuController;
 use App\Http\Controllers\Maintenance\MaintenanceController;
 use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\HRISController;
+use App\Http\Controllers\FinanceController;
+use App\Http\Controllers\HRDController;
 
 use App\Models\Post;
 use App\Models\User;
@@ -21,17 +24,6 @@ use App\Models\Category;
 use App\Models\Karyawan;
 use App\Models\NonKaryawan;
 use Illuminate\Support\Arr;
-// use Illuminate\Support\Facades\Route;
-
-// // Route::get('/', function () {
-// //     return redirect()->route('login');
-// // });
-// // Route::get('/login', [LoginController::class, 'index'])->name('login')->middleware('guest');
-// // Route::post('/login', [LoginController::class, 'authenticate']);
-
-Route::get('/home', function () {
-    return view('home', ['title'=> 'Home Page']);
-});
 
 
 Route::get('/about', function () {
@@ -82,7 +74,7 @@ Route::get('/karyawan/form', function () {
     return view('karyawan', ['title'=> 'Add/Edit Employees']);
 });
 
-    //ROUTE UTK NON KARYAWAN : FORM(ADD, EDIT), LIST}} 
+//ROUTE UTK NON KARYAWAN : FORM(ADD, EDIT), LIST}} 
 Route::get('/nonkaryawan', function(){
     $nonkaryawans=NonKaryawan::get();
     return view('non_karyawan',['title'=>'Non-Karyawan']);
@@ -102,13 +94,7 @@ Route::get('/nonkaryawan/form/edit', function(){
     return view('non_karyawan',['title'=>'Edit Non-Karyawan']);
 });
 
-Route::get('/security', function(){
-    return view('loglists',['title'=>'Security']);
-})->name('security.list-satpam');
 
-Route::get('security/form-satpam', function(){
-    return view('security',['title'=>'Form Satpam']);
-})->name('security.form-satpam');
 // //     //MAINTENANCE : FORM, LIST
 // // Route::get('/maintenance', function(){
 // //     return view('maintenance',['title'=>'Maintenance']);
@@ -142,64 +128,45 @@ Route::get('security/form-satpam', function(){
 
 
 // Login Routes
+
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+// Route::get('/login', function () {
+//     return redirect()->route('home');
+// })->name('login');
 
-// Home Route
-Route::get('/', function () {
-    return view('auth.login');
-})->name('welcome');
+Route::middleware(['auth'])->group(function () {
+    // Redirect dari root ke home
+    Route::get('/', function () {
+        return redirect()->route('home');
+    });
 
-Route::middleware('auth')->group(function () { 
-    Route::get('/home', function (Request $request) {
-        // Tambahkan log detail untuk debugging
-        Log::info('Accessing home route', [
-            'session_all' => $request->session()->all(),
-            'auth_check' => Auth::check(),
-            'auth_id' => Auth::id(),
-            'session_user_id' => $request->session()->get('user_id'),
-            'request_path' => $request->path(),
-            'request_url' => $request->url()
-        ]);
-        
-        // Pastikan view home.blade.php ada
-        if (!View::exists('home')) {
-            Log::error('View home.blade.php tidak ditemukan');
-            abort(404, 'View home.blade.php tidak ditemukan');
-        }
-        return view('home');
-    })->name('home'); 
-
-    // Logout Route
-    Route::post('/logout', function (Request $request) {
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-        return redirect('/login');
-    })->name('logout');
+    // Jadikan hris/list sebagai home yang bisa diakses dengan /home atau /hris
+    Route::get('/home', [HRISController::class, 'index'])->name('home');
 
     // Route untuk profile karyawan
     Route::get('/profile', function () {
         return view('profile.karyawan');
     })->name('profile.karyawan')->middleware('auth');
 
-    // HRIS Routes
-    Route::prefix('hris')->name('hris.')->group(function () {
-        Route::get('/form', function () {
-            return view('hris.form');
-        })->name('form');
-        
-        Route::get('/list', function () {
-            return view('hris.list');
-        })->name('list');
-    }); 
+    // HRIS Menu Routes
+    Route::prefix('hris')->name('hris.')->middleware(['auth'])->group(function () {
+        Route::get('/form', [HRISController::class, 'create'])->name('form');
+        Route::post('/store', [HRISController::class, 'store'])->name('store');
+        Route::get('/detail/{id}', [HRISController::class, 'show'])->name('detail');
+        Route::get('/edit/{id}', [HRISController::class, 'edit'])->name('edit');
+        Route::put('/update/{id}', [HRISController::class, 'update'])->name('update');
+        Route::delete('/destroy/{id}', [HRISController::class, 'destroy'])->name('destroy');
+        Route::get('/download/{id}', [HRISController::class, 'download'])->name('download');
+        Route::put('/send/{id}', [HRISController::class, 'send'])->name('send');
+    });
 
-    // HRD Routes
-    Route::prefix('hrd')->name('hrd.')->group(function () {
-        Route::get('/form-karyawan', function () {
-            return view('hrd.form-karyawan');
-        })->name('form-karyawan');
+    Route::prefix('hrd')->name('hrd.')->middleware(['auth'])->group(function () {
+        Route::middleware(['check.menu.access:HRD'])->group(function () {
+            Route::get('/form-karyawan', function () {
+                return view('hrd.form-karyawan');
+            })->name('form-karyawan');
         
         Route::get('/list-karyawan', function () {
             return view('hrd.list-karyawan');
@@ -213,193 +180,204 @@ Route::middleware('auth')->group(function () {
             return view('hrd.list-nonkaryawan');
         })->name('list-nonkaryawan');
         
-        Route::get('/list-surat', function () {
-            return view('hrd.list-surat');
-        })->name('list-surat');
+        Route::get('/surat', [HRDController::class, 'showSurat'])->name('list-surat');
+        Route::get('/detail/{id}', [HRDController::class, 'detail'])->name('detail');
+        Route::get('/download/{id}', [HRDController::class, 'download'])->name('download');
+        });
     }); 
 
     // Finance Routes
-    Route::prefix('finance')->name('finance.')->group(function () {
-        Route::get('/list-surat', function () {
-            return view('finance.list-surat');
-        })->name('list-surat');
-    }); 
+    Route::prefix('finance')->name('finance.')->middleware(['check.menu.access:Finance'])->group(function () {
+        Route::get('/surat', [FinanceController::class, 'index'])->name('list-surat');
+        Route::get('/detail/{id}', [FinanceController::class, 'detail'])->name('detail');
+        Route::get('/download/{id}', [FinanceController::class, 'download'])->name('download');
+    });
+    // }); 
 
-    // Warehouse Routes
+    // Warehouse Menu Routes
     Route::prefix('warehouse')->name('warehouse.')->middleware(['auth'])->group(function () {
-        // Product routes
-        Route::get('/product', [BarangController::class, 'index'])->name('product-list');
-        Route::get('/product2', [BarangController::class, 'index'])->name('product-list2');
-        Route::get('/product/create', [BarangController::class, 'create'])->name('product-form');
-        Route::post('/product', [BarangController::class, 'store'])->name('product.store');
-        Route::get('/product/{id}/edit', [BarangController::class, 'edit'])->name('product.edit');
-        Route::put('/product/{id}', [BarangController::class, 'update'])->name('product.update');
-        Route::delete('/product/{barang}', [BarangController::class, 'destroy'])->name('product.destroy');
-        Route::post('/product/destroy-multiple', [BarangController::class, 'destroyMultiple'])
-            ->name('product.destroy-multiple');
-
-        // Import route
-        Route::post('/product/import', [BarangController::class, 'import'])
-            ->name('product.import');
-
-        // Barang Pallet List Routes
-        Route::prefix('barangpallet')->group(function () {
+        Route::middleware(['check.menu.access:Warehouse'])->group(function () { 
             // CS01 routes
-            Route::get('/cs01/list', [BarangPalletController::class, 'listBarangPallet'])
-                ->name('barangpallet-cs01-list');
-            
-            Route::get('/cs01/list/{room}', [BarangPalletController::class, 'listBarangPallet'])
-                ->name('barangpallet-cs01-list.room');
+            Route::middleware(['check.submenu.access:CS01'])->group(function () {
+                Route::get('/product-cs01', [BarangController::class, 'index'])->name('product-list2'); //sidebar
+                Route::get('/barangpallet/cs01/list', [BarangPalletController::class, 'listBarangPallet'])
+                    ->name('barangpallet-cs01-list');
+                
+                Route::get('/barangpallet/cs01/list/{room}', [BarangPalletController::class, 'listBarangPallet'])
+                    ->name('barangpallet-cs01-list.room');
+
+                Route::middleware(['check.admin.status'])->group(function () {
+                    Route::get('/barangpallet/cs01/{id?}', [BarangPalletController::class, 'barangpalletCS01'])
+                        ->name('barangpallet-cs01');
+                });
+            });
 
             // CS02 routes  
-            Route::get('/cs02/list', [BarangPalletController::class, 'listBarangPallet'])
-                ->name('barangpallet-cs02-list');
-            
-            Route::get('/cs02/list/{room}', [BarangPalletController::class, 'listBarangPallet'])
-                ->name('barangpallet-cs02-list.room');
+            Route::middleware(['check.submenu.access:CS02'])->group(function () {
+                Route::get('/product-cs02', [BarangController::class, 'index'])->name('product-list');
+                Route::get('/barangpallet/cs02/list', [BarangPalletController::class, 'listBarangPallet'])
+                    ->name('barangpallet-cs02-list');
+                
+                Route::get('/barangpallet/cs02/list/{room}', [BarangPalletController::class, 'listBarangPallet'])
+                    ->name('barangpallet-cs02-list.room');
 
-            // Masal routes
-            Route::get('/masal/list', [BarangPalletController::class, 'listBarangPallet'])
-                ->name('barangpallet-masal-list');
-            
-            Route::get('/masal/list/{room}', [BarangPalletController::class, 'listBarangPallet'])
-                ->name('barangpallet-masal-list.room');
+                Route::middleware(['check.admin.status'])->group(function () {
+                    Route::get('/barangpallet/cs02/{id?}', [BarangPalletController::class, 'barangpalletCS02'])
+                        ->name('barangpallet-cs02');
+                });
+            });
+
+            // Form routes Barang dapat diakses semua user dengan akses Warehouse dengan status Administrator atau Super Admin
+            Route::middleware(['check.admin.status'])->group(function () {
+                Route::post('/product', [BarangController::class, 'store'])->name('product.store');
+                Route::get('/product/{id}/edit', [BarangController::class, 'edit'])->name('product.edit');
+                Route::put('/product/{id}', [BarangController::class, 'update'])->name('product.update');
+                Route::delete('/product/{barang}', [BarangController::class, 'destroy'])->name('product.destroy');
+                Route::post('/product/import', [BarangController::class, 'import'])->name('product.import');
+                Route::get('/product/create', [BarangController::class, 'create'])->name('product-form');
+            });
+
+            // Import routes - hanya untuk Administrator dan Super Admin dengan beberapa persyaratan khusus yang memberikan perbedaan pada dropdown tempat
+            Route::middleware(['check.admin.status'])->group(function () {
+                Route::post('/barangpallet/import', [BarangPalletController::class, 'import'])->name('barangpallet.import');
+            });
+
+            // Fitur-fitur yang dapat diakses semua users dengan akses Warehouse
+            Route::get('/api/search', [BarangController::class, 'searchRecommendations'])
+            ->name('api.search');
+
+            // Barang Pallet Search API
+            Route::get('/barangpallet/search', [BarangPalletController::class, 'searchBarangPallet'])
+                ->name('barangpallet.search');
+
+            // Dalam group route warehouse
+            Route::get('/barangpallet/search-barang', [BarangPalletController::class, 'searchBarang'])
+                ->name('barangpallet.search-barang');
+
+            // Fitur-fitur yang hanya dapat diakses oleh Administrator atau Super Admin
+            Route::middleware(['check.admin.status'])->group(function () {
+                Route::post('/barangpallet', [BarangPalletController::class, 'store'])
+                    ->name('barangpallet.store');
+
+                Route::get('/barangpallet/{id}/edit', [BarangPalletController::class, 'edit'])
+                    ->name('barangpallet.edit');
+
+                Route::put('/barangpallet/{id}', [BarangPalletController::class, 'update'])
+                    ->name('barangpallet.update');
+                    
+                Route::delete('/barangpallet/{id}', [BarangPalletController::class, 'destroy'])
+                    ->name('barangpallet.destroy');
+
+                // Tambahkan route untuk delete multiple
+                Route::delete('barangpallet/destroy-multiple', [BarangPalletController::class, 'destroyMultiple'])
+                    ->name('barangpallet.destroy-multiple');
+
+                // API route untuk mendapatkan daftar ruangan berdasarkan tempat, digunakan di Barang Pallet Form
+                Route::get('/api/ruangan/{tempat}', function ($tempat) {
+                    return App\Models\Tempat::where('nama', strtoupper($tempat))
+                        ->whereNotNull('ruangan')
+                            ->pluck('ruangan');
+                })->name('api.ruangan');
+            });
         });
-
-        // Barang Pallet Form Routes
-        Route::get('/barangpallet/cs01/{id?}', [BarangPalletController::class, 'barangpalletCS01'])
-            ->name('barangpallet-cs01');
-        Route::get('/barangpallet/cs02/{id?}', [BarangPalletController::class, 'barangpalletCS02'])
-            ->name('barangpallet-cs02');
-        Route::get('/barangpallet/masal/{id?}', [BarangPalletController::class, 'barangpalletMasal'])
-            ->name('barangpallet-masal');
-        
-        // Barang Pallet Actions
-        Route::post('/barangpallet', [BarangPalletController::class, 'store'])
-            ->name('barangpallet.store');
-        Route::get('/barangpallet/{id}/edit', [BarangPalletController::class, 'edit'])
-            ->name('barangpallet.edit');
-        Route::put('/barangpallet/{id}', [BarangPalletController::class, 'update'])
-            ->name('barangpallet.update');
-        Route::delete('/barangpallet/{id}', [BarangPalletController::class, 'destroy'])
-            ->name('barangpallet.destroy');
-        
-        // Barang Pallet Search API
-        Route::get('/barangpallet/search', [BarangPalletController::class, 'searchBarangPallet'])
-            ->name('barangpallet.search');
-
-        // Import route
-        Route::post('/barangpallet/import', [BarangPalletController::class, 'import'])
-            ->name('barangpallet.import');
-
-        // Export routes
-        Route::post('/barangpallet/export', [BarangPalletController::class, 'export'])
-            ->name('barangpallet.export');
-
-        // Tambahkan route untuk delete multiple
-        Route::delete('barangpallet/destroy-multiple', [BarangPalletController::class, 'destroyMultiple'])
-            ->name('barangpallet.destroy-multiple');
-
-        // Dalam group route warehouse
-        Route::get('/barangpallet/search-barang', [BarangPalletController::class, 'searchBarang'])
-            ->name('barangpallet.search-barang');
-
         
     }); 
 
-    Route::prefix('maintenance')->name('maintenance.')->group(function () {
-        // Route::prefix('suhu')->name('suhu.')->group(function () {
-            
-        //     // CS01 specific routes
-        //     Route::get('/list-cs01', [SuhuController::class, 'listCS01'])->name('list-cs01');
-        //     Route::get('/form-cs01', [SuhuController::class, 'formCS01'])->name('form-cs01');
-            
-        //     // CS02 specific routes
-        //     Route::get('/list-cs02', [SuhuController::class, 'listCS02'])->name('list-cs02');
-        //     Route::get('/form-cs02', [SuhuController::class, 'formCS02'])->name('form-cs02');
-            
-        //     // Actions
-        //     Route::post('/store', [SuhuController::class, 'store'])->name('store');
-        //     Route::put('/{suhu}', [SuhuController::class, 'update'])->name('edit');
-        //     Route::delete('/{suhu}', [SuhuController::class, 'destroy'])->name('destroy');
+    Route::prefix('suhu')->name('suhu.')->middleware(['auth'])->group(function () {
+        Route::middleware(['check.menu.access:Suhu'])->group(function () {
+            Route::get('/list', [SuhuController::class, 'index'])->name('list'); //sidebar
+            // Form routes - hanya untuk Administrator
+            Route::middleware(['check.admin.status'])->group(function () {
+                Route::get('/create', [SuhuController::class, 'create'])->name('create'); //sidebar
+                Route::post('/list', [SuhuController::class, 'store'])->name('store');
+                Route::get('/{suhu}/edit', [SuhuController::class, 'edit'])->name('edit');
+                Route::put('/{suhu}', [SuhuController::class, 'update'])->name('update'); //form
+                Route::delete('/{suhu}', [SuhuController::class, 'destroy'])->name('destroy');
+            });
+        });
+    });
 
-            
-        // });
-        // Suhu routes
-        Route::get('/suhu', [SuhuController::class, 'index'])->name('suhu.list');
-        Route::get('/suhu/create', [SuhuController::class, 'create'])->name('suhu.create');
-        Route::post('/suhu', [SuhuController::class, 'store'])->name('suhu.store');
-        Route::get('/suhu/{suhu}/edit', [SuhuController::class, 'edit'])->name('suhu.edit');
-        Route::put('/suhu/{suhu}', [SuhuController::class, 'update'])->name('suhu.update');
-        Route::delete('/suhu/{suhu}', [SuhuController::class, 'destroy'])->name('suhu.destroy');
-        
-        // API route untuk search
-        Route::get('/api/suhu/search', [SuhuController::class, 'search'])->name('suhu.search');
-
-        Route::prefix('facility')->name('facility.')->group(function () {
+    // Maintenance Routes
+    Route::prefix('maintenance')->name('maintenance.')->middleware(['auth'])->group(function () {
+        Route::middleware(['check.menu.access:Maintenance'])->group(function () {
             Route::get('/form', function () {
                 return view('maintenance.facility-form');
             })->name('form');
-            
+        
             Route::get('/list', function () {
-                return view('list-maintenance');
+                return view('maintenance.facilityroom');
             })->name('list');
         });
-
-        // Route::get('/suhu/export', [SuhuController::class, 'export'])
-        //     ->name('suhu.export');
     });
 
-    // Laporan Routes
+    Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
+        
+        Route::get('/superadmin', [AdminController::class, 'index'])->name('superadmin');
+        Route::get('/editform/{id}', [AdminController::class, 'editForm'])->name('editform');
+        Route::post('/update-status', [AdminController::class, 'updateStatus'])->name('users.status');
+        Route::delete('/users/{id}', [AdminController::class, 'destroy'])->name('destroy');
+        Route::get('/add-users', [AdminController::class, 'showAddUserForm'])->name('add-users');
+        Route::post('/add-users', [AdminController::class, 'storeUser'])->name('store-user');
+        Route::put('/users/{id}/status', [AdminController::class, 'updateStatus'])->name('update-status');
+        Route::post('/update-menu-access', [AdminController::class, 'updateMenuAccess'])->name('update-menu-access');
+    }); 
+
+    // Laporan Routes (dapat diakses semua user)
     Route::prefix('laporan')->name('laporan.')->middleware('auth')->group(function () {
-        Route::get('/barang', function () {
-            return view('laporan.barang');
-        })->name('barang');
+        Route::middleware(['check.menu.access:CS01','check.menu.access:CS02'])->group(function () {
+            Route::get('/barang', function () {
+                return view('laporan.barang');
+            })->name('barang');
+            Route::post('/barang/export', [LaporanController::class, 'exportBarang'])->name('barang.export');
+            Route::get('/barang', [LaporanController::class, 'barang'])->name('barang');
+        });
+
+        Route::middleware(['check.menu.access:CS01','check.menu.access:CS02'])->group(function () {
+            Route::get('/pencatatan-pallet', function () {
+                return view('laporan.pallet');
+            })->name('pallet');
+            Route::post('/pallet/export', [LaporanController::class, 'exportPallet'])->name('pallet.export');
+            Route::get('/pallet', [LaporanController::class, 'pallet'])->name('pallet');
+        });
         
-        Route::get('/perpindahan-barang-gudang', function () {
-            return view('laporan.pallet');
-        })->name('pallet');
-        
-        Route::get('/suhu', function () {
-            return view('laporan.suhu');
-        })->name('suhu');
-        
-        Route::get('/aset-fasilitas', function () {
-            return view('laporan.aset-fasilitas');
-        })->name('aset');
-        
-        Route::get('/maintenance', function () {
-            return view('laporan.maintenance');
-        })->name('maintenance');
-        
-        // Export routes
-        Route::post('/pallet/export', [LaporanController::class, 'exportPallet'])->name('pallet.export');
-        Route::get('/suhu/export', [LaporanController::class, 'exportSuhu'])->name('suhu.export');
+        Route::middleware(['check.menu.access:Suhu'])->group(function () {
+            Route::get('/suhu', function () {
+                return view('laporan.suhu');
+            })->name('suhu');
+            Route::post('/suhu/export', [LaporanController::class, 'exportSuhu'])->name('suhu.export');
+        });
+
+        Route::middleware(['check.menu.access:Maintenance'])->group(function () {
+            Route::get('/aset-fasilitas', function () {
+                return view('laporan.aset-fasilitas');
+            })->name('aset');
+        });
+
+        Route::middleware(['check.menu.access:Maintenance'])->group(function () {
+            Route::get('/maintenance', function () {
+                return view('laporan.maintenance');
+            })->name('maintenance');
+        });
     }); 
 
-    // Admin Routes
-    Route::prefix('admin')->name('admin.')->group(function () {
-        Route::get('/superadmin', function () {
-            return view('admin.superadmin');
-        })->name('superadmin');
+    // Menu Security
+    Route::prefix('security')->name('security.')->middleware(['auth'])->group(function () { 
+        Route::middleware(['check.menu.access:Security'])->group(function () {
+            Route::get('/list', function(){
+                return view('loglists',['title'=>'Security']);
+            })->name('list-satpam');
+
+        Route::get('/form-satpam', function(){
+            return view('security',['title'=>'Form Satpam']);
+            })->name('form-satpam');
+        }); 
     }); 
 
-    // Search API route (ok)
-    Route::get('/api/search', [BarangController::class, 'searchRecommendations'])
-        ->name('api.search')
-        ->middleware('auth');
-
-    // API route untuk mendapatkan daftar ruangan berdasarkan tempat (ok)
-    Route::get('/api/ruangan/{tempat}', function ($tempat) {
-        return App\Models\Tempat::where('nama', strtoupper($tempat))
-            ->whereNotNull('ruangan')
-            ->pluck('ruangan');
-    })->name('api.ruangan');
-
-    Route::get('/laporan/pallet', [LaporanController::class, 'pallet'])->name('laporan.pallet');
-
-
-
-    // Route::get('/submenu/', [LaporanController::class, 'pallet'])->name('laporan.pallet');
-
+    // Logout Route
+    Route::post('/logout', function (Request $request) {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return redirect('/login');
+    })->name('logout');
 }); 
