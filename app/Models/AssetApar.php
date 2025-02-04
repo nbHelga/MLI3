@@ -20,7 +20,6 @@ class AssetApar extends Model
         'keterangan',
         'biaya_refill',
         'keterangan_refill',
-        'biaya_refill',
     ];
     public function asset(): BelongsTo
     {
